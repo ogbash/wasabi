@@ -11,22 +11,24 @@ import org.wasabi.http.StatusCodes
 
 
 public class ContentNegotiationInterceptor(val serializers: List<Serializer>): Interceptor() {
-    override fun intercept(request: Request, response: Response) {
-            if (response.negotiatedMediaType == "" && (response.sendBuffer != null) && !(response.sendBuffer is String)) {
-                for (requestedContentType in response.requestedContentTypes) {
-                    val serializer = serializers.firstOrNull { it.canSerialize(requestedContentType) }
-                    if (serializer != null) {
-                        response.negotiatedMediaType = requestedContentType
-                        next()
-                        break;
-                    }
+    override fun intercept(request: Request, response: Response): Boolean {
+        var executeNext = false
+        if (response.negotiatedMediaType == "" && (response.sendBuffer != null) && !(response.sendBuffer is String)) {
+            for (requestedContentType in response.requestedContentTypes) {
+                val serializer = serializers.firstOrNull { it.canSerialize(requestedContentType) }
+                if (serializer != null) {
+                    response.negotiatedMediaType = requestedContentType
+                    executeNext = true
+                    break;
                 }
-                if (response.negotiatedMediaType == "") {
-                    response.setStatus(StatusCodes.UnsupportedMediaType)
-                }
-            } else {
-                next()
             }
+            if (response.negotiatedMediaType == "") {
+                response.setStatus(StatusCodes.UnsupportedMediaType)
+            }
+        } else {
+            executeNext = true
+        }
+        return executeNext
     }
 }
 

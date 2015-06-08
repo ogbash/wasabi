@@ -180,7 +180,7 @@ public class NettyRequestHandler(private val appServer: AppServer, routeLocator:
                 } catch (e: RouteNotFoundException) {
                     response.setStatus(StatusCodes.NotFound)
                 } catch (e: Exception) {
-                    log!!.debug("Exception during web invocation: ${e.getMessage()}")
+                    log!!.debug("Exception during web invocation: ${e.getMessage()}", e)
                     response.setStatus(StatusCodes.InternalServerError)
                 }
                 writeResponse(ctx!!, response)
@@ -223,9 +223,9 @@ public class NettyRequestHandler(private val appServer: AppServer, routeLocator:
         for (interceptorEntry in interceptorsToRun) {
 
             val interceptor = interceptorEntry.interceptor
-            interceptor.intercept(request!!, response)
+            val executeNext = interceptor.intercept(request!!, response)
 
-            if (!interceptor.executeNext) {
+            if (!executeNext) {
                 bypassPipeline = true
                 break
             }
